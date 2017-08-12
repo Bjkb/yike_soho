@@ -2,277 +2,6 @@ webpackJsonp([0],[
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(2), __webpack_require__(12), __webpack_require__(18)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else if (typeof exports !== "undefined") {
-        factory(exports, require('./util/root'), require('./util/toSubscriber'), require('./symbol/observable'));
-    } else {
-        var mod = {
-            exports: {}
-        };
-        factory(mod.exports, global.root, global.toSubscriber, global.observable);
-        global.Observable = mod.exports;
-    }
-})(this, function (exports, root_1, toSubscriber_1, observable_1) {
-    "use strict";
-
-    /**
-     * A representation of any set of values over any amount of time. This the most basic building block
-     * of RxJS.
-     *
-     * @class Observable<T>
-     */
-    var Observable = function () {
-        /**
-         * @constructor
-         * @param {Function} subscribe the function that is  called when the Observable is
-         * initially subscribed to. This function is given a Subscriber, to which new values
-         * can be `next`ed, or an `error` method can be called to raise an error, or
-         * `complete` can be called to notify of a successful completion.
-         */
-        function Observable(subscribe) {
-            this._isScalar = false;
-            if (subscribe) {
-                this._subscribe = subscribe;
-            }
-        }
-        /**
-         * Creates a new Observable, with this Observable as the source, and the passed
-         * operator defined as the new observable's operator.
-         * @method lift
-         * @param {Operator} operator the operator defining the operation to take on the observable
-         * @return {Observable} a new observable with the Operator applied
-         */
-        Observable.prototype.lift = function (operator) {
-            var observable = new Observable();
-            observable.source = this;
-            observable.operator = operator;
-            return observable;
-        };
-        /**
-         * Invokes an execution of an Observable and registers Observer handlers for notifications it will emit.
-         *
-         * <span class="informal">Use it when you have all these Observables, but still nothing is happening.</span>
-         *
-         * `subscribe` is not a regular operator, but a method that calls Observables internal `subscribe` function. It
-         * might be for example a function that you passed to a {@link create} static factory, but most of the time it is
-         * a library implementation, which defines what and when will be emitted by an Observable. This means that calling
-         * `subscribe` is actually the moment when Observable starts its work, not when it is created, as it is often
-         * thought.
-         *
-         * Apart from starting the execution of an Observable, this method allows you to listen for values
-         * that an Observable emits, as well as for when it completes or errors. You can achieve this in two
-         * following ways.
-         *
-         * The first way is creating an object that implements {@link Observer} interface. It should have methods
-         * defined by that interface, but note that it should be just a regular JavaScript object, which you can create
-         * yourself in any way you want (ES6 class, classic function constructor, object literal etc.). In particular do
-         * not attempt to use any RxJS implementation details to create Observers - you don't need them. Remember also
-         * that your object does not have to implement all methods. If you find yourself creating a method that doesn't
-         * do anything, you can simply omit it. Note however, that if `error` method is not provided, all errors will
-         * be left uncaught.
-         *
-         * The second way is to give up on Observer object altogether and simply provide callback functions in place of its methods.
-         * This means you can provide three functions as arguments to `subscribe`, where first function is equivalent
-         * of a `next` method, second of an `error` method and third of a `complete` method. Just as in case of Observer,
-         * if you do not need to listen for something, you can omit a function, preferably by passing `undefined` or `null`,
-         * since `subscribe` recognizes these functions by where they were placed in function call. When it comes
-         * to `error` function, just as before, if not provided, errors emitted by an Observable will be thrown.
-         *
-         * Whatever style of calling `subscribe` you use, in both cases it returns a Subscription object.
-         * This object allows you to call `unsubscribe` on it, which in turn will stop work that an Observable does and will clean
-         * up all resources that an Observable used. Note that cancelling a subscription will not call `complete` callback
-         * provided to `subscribe` function, which is reserved for a regular completion signal that comes from an Observable.
-         *
-         * Remember that callbacks provided to `subscribe` are not guaranteed to be called asynchronously.
-         * It is an Observable itself that decides when these functions will be called. For example {@link of}
-         * by default emits all its values synchronously. Always check documentation for how given Observable
-         * will behave when subscribed and if its default behavior can be modified with a {@link Scheduler}.
-         *
-         * @example <caption>Subscribe with an Observer</caption>
-         * const sumObserver = {
-         *   sum: 0,
-         *   next(value) {
-         *     console.log('Adding: ' + value);
-         *     this.sum = this.sum + value;
-         *   },
-         *   error() { // We actually could just remote this method,
-         *   },        // since we do not really care about errors right now.
-         *   complete() {
-         *     console.log('Sum equals: ' + this.sum);
-         *   }
-         * };
-         *
-         * Rx.Observable.of(1, 2, 3) // Synchronously emits 1, 2, 3 and then completes.
-         * .subscribe(sumObserver);
-         *
-         * // Logs:
-         * // "Adding: 1"
-         * // "Adding: 2"
-         * // "Adding: 3"
-         * // "Sum equals: 6"
-         *
-         *
-         * @example <caption>Subscribe with functions</caption>
-         * let sum = 0;
-         *
-         * Rx.Observable.of(1, 2, 3)
-         * .subscribe(
-         *   function(value) {
-         *     console.log('Adding: ' + value);
-         *     sum = sum + value;
-         *   },
-         *   undefined,
-         *   function() {
-         *     console.log('Sum equals: ' + sum);
-         *   }
-         * );
-         *
-         * // Logs:
-         * // "Adding: 1"
-         * // "Adding: 2"
-         * // "Adding: 3"
-         * // "Sum equals: 6"
-         *
-         *
-         * @example <caption>Cancel a subscription</caption>
-         * const subscription = Rx.Observable.interval(1000).subscribe(
-         *   num => console.log(num),
-         *   undefined,
-         *   () => console.log('completed!') // Will not be called, even
-         * );                                // when cancelling subscription
-         *
-         *
-         * setTimeout(() => {
-         *   subscription.unsubscribe();
-         *   console.log('unsubscribed!');
-         * }, 2500);
-         *
-         * // Logs:
-         * // 0 after 1s
-         * // 1 after 2s
-         * // "unsubscribed!" after 2,5s
-         *
-         *
-         * @param {Observer|Function} observerOrNext (optional) Either an observer with methods to be called,
-         *  or the first of three possible handlers, which is the handler for each value emitted from the subscribed
-         *  Observable.
-         * @param {Function} error (optional) A handler for a terminal event resulting from an error. If no error handler is provided,
-         *  the error will be thrown as unhandled.
-         * @param {Function} complete (optional) A handler for a terminal event resulting from successful completion.
-         * @return {ISubscription} a subscription reference to the registered handlers
-         * @method subscribe
-         */
-        Observable.prototype.subscribe = function (observerOrNext, error, complete) {
-            var operator = this.operator;
-            var sink = toSubscriber_1.toSubscriber(observerOrNext, error, complete);
-            if (operator) {
-                operator.call(sink, this.source);
-            } else {
-                sink.add(this.source ? this._subscribe(sink) : this._trySubscribe(sink));
-            }
-            if (sink.syncErrorThrowable) {
-                sink.syncErrorThrowable = false;
-                if (sink.syncErrorThrown) {
-                    throw sink.syncErrorValue;
-                }
-            }
-            return sink;
-        };
-        Observable.prototype._trySubscribe = function (sink) {
-            try {
-                return this._subscribe(sink);
-            } catch (err) {
-                sink.syncErrorThrown = true;
-                sink.syncErrorValue = err;
-                sink.error(err);
-            }
-        };
-        /**
-         * @method forEach
-         * @param {Function} next a handler for each value emitted by the observable
-         * @param {PromiseConstructor} [PromiseCtor] a constructor function used to instantiate the Promise
-         * @return {Promise} a promise that either resolves on observable completion or
-         *  rejects with the handled error
-         */
-        Observable.prototype.forEach = function (next, PromiseCtor) {
-            var _this = this;
-            if (!PromiseCtor) {
-                if (root_1.root.Rx && root_1.root.Rx.config && root_1.root.Rx.config.Promise) {
-                    PromiseCtor = root_1.root.Rx.config.Promise;
-                } else if (root_1.root.Promise) {
-                    PromiseCtor = root_1.root.Promise;
-                }
-            }
-            if (!PromiseCtor) {
-                throw new Error('no Promise impl found');
-            }
-            return new PromiseCtor(function (resolve, reject) {
-                // Must be declared in a separate statement to avoid a RefernceError when
-                // accessing subscription below in the closure due to Temporal Dead Zone.
-                var subscription;
-                subscription = _this.subscribe(function (value) {
-                    if (subscription) {
-                        // if there is a subscription, then we can surmise
-                        // the next handling is asynchronous. Any errors thrown
-                        // need to be rejected explicitly and unsubscribe must be
-                        // called manually
-                        try {
-                            next(value);
-                        } catch (err) {
-                            reject(err);
-                            subscription.unsubscribe();
-                        }
-                    } else {
-                        // if there is NO subscription, then we're getting a nexted
-                        // value synchronously during subscription. We can just call it.
-                        // If it errors, Observable's `subscribe` will ensure the
-                        // unsubscription logic is called, then synchronously rethrow the error.
-                        // After that, Promise will trap the error and send it
-                        // down the rejection path.
-                        next(value);
-                    }
-                }, reject, resolve);
-            });
-        };
-        Observable.prototype._subscribe = function (subscriber) {
-            return this.source.subscribe(subscriber);
-        };
-        /**
-         * An interop point defined by the es7-observable spec https://github.com/zenparsing/es-observable
-         * @method Symbol.observable
-         * @return {Observable} this instance of the observable
-         */
-        Observable.prototype[observable_1.observable] = function () {
-            return this;
-        };
-        // HACK: Since TypeScript inherits static properties too, we have to
-        // fight against TypeScript here so Subject can have a different static create signature
-        /**
-         * Creates a new cold Observable by calling the Observable constructor
-         * @static true
-         * @owner Observable
-         * @method create
-         * @param {Function} subscribe? the subscriber function to be passed to the Observable constructor
-         * @return {Observable} a new cold observable
-         */
-        Observable.create = function (subscribe) {
-            return new Observable(subscribe);
-        };
-        return Observable;
-    }();
-    exports.Observable = Observable;
-    //# sourceMappingURL=Observable.js.map
-});
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
 	if (true) {
 		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [module], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
@@ -10125,6 +9854,277 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 });
 
 /***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(2), __webpack_require__(12), __webpack_require__(18)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else if (typeof exports !== "undefined") {
+        factory(exports, require('./util/root'), require('./util/toSubscriber'), require('./symbol/observable'));
+    } else {
+        var mod = {
+            exports: {}
+        };
+        factory(mod.exports, global.root, global.toSubscriber, global.observable);
+        global.Observable = mod.exports;
+    }
+})(this, function (exports, root_1, toSubscriber_1, observable_1) {
+    "use strict";
+
+    /**
+     * A representation of any set of values over any amount of time. This the most basic building block
+     * of RxJS.
+     *
+     * @class Observable<T>
+     */
+    var Observable = function () {
+        /**
+         * @constructor
+         * @param {Function} subscribe the function that is  called when the Observable is
+         * initially subscribed to. This function is given a Subscriber, to which new values
+         * can be `next`ed, or an `error` method can be called to raise an error, or
+         * `complete` can be called to notify of a successful completion.
+         */
+        function Observable(subscribe) {
+            this._isScalar = false;
+            if (subscribe) {
+                this._subscribe = subscribe;
+            }
+        }
+        /**
+         * Creates a new Observable, with this Observable as the source, and the passed
+         * operator defined as the new observable's operator.
+         * @method lift
+         * @param {Operator} operator the operator defining the operation to take on the observable
+         * @return {Observable} a new observable with the Operator applied
+         */
+        Observable.prototype.lift = function (operator) {
+            var observable = new Observable();
+            observable.source = this;
+            observable.operator = operator;
+            return observable;
+        };
+        /**
+         * Invokes an execution of an Observable and registers Observer handlers for notifications it will emit.
+         *
+         * <span class="informal">Use it when you have all these Observables, but still nothing is happening.</span>
+         *
+         * `subscribe` is not a regular operator, but a method that calls Observables internal `subscribe` function. It
+         * might be for example a function that you passed to a {@link create} static factory, but most of the time it is
+         * a library implementation, which defines what and when will be emitted by an Observable. This means that calling
+         * `subscribe` is actually the moment when Observable starts its work, not when it is created, as it is often
+         * thought.
+         *
+         * Apart from starting the execution of an Observable, this method allows you to listen for values
+         * that an Observable emits, as well as for when it completes or errors. You can achieve this in two
+         * following ways.
+         *
+         * The first way is creating an object that implements {@link Observer} interface. It should have methods
+         * defined by that interface, but note that it should be just a regular JavaScript object, which you can create
+         * yourself in any way you want (ES6 class, classic function constructor, object literal etc.). In particular do
+         * not attempt to use any RxJS implementation details to create Observers - you don't need them. Remember also
+         * that your object does not have to implement all methods. If you find yourself creating a method that doesn't
+         * do anything, you can simply omit it. Note however, that if `error` method is not provided, all errors will
+         * be left uncaught.
+         *
+         * The second way is to give up on Observer object altogether and simply provide callback functions in place of its methods.
+         * This means you can provide three functions as arguments to `subscribe`, where first function is equivalent
+         * of a `next` method, second of an `error` method and third of a `complete` method. Just as in case of Observer,
+         * if you do not need to listen for something, you can omit a function, preferably by passing `undefined` or `null`,
+         * since `subscribe` recognizes these functions by where they were placed in function call. When it comes
+         * to `error` function, just as before, if not provided, errors emitted by an Observable will be thrown.
+         *
+         * Whatever style of calling `subscribe` you use, in both cases it returns a Subscription object.
+         * This object allows you to call `unsubscribe` on it, which in turn will stop work that an Observable does and will clean
+         * up all resources that an Observable used. Note that cancelling a subscription will not call `complete` callback
+         * provided to `subscribe` function, which is reserved for a regular completion signal that comes from an Observable.
+         *
+         * Remember that callbacks provided to `subscribe` are not guaranteed to be called asynchronously.
+         * It is an Observable itself that decides when these functions will be called. For example {@link of}
+         * by default emits all its values synchronously. Always check documentation for how given Observable
+         * will behave when subscribed and if its default behavior can be modified with a {@link Scheduler}.
+         *
+         * @example <caption>Subscribe with an Observer</caption>
+         * const sumObserver = {
+         *   sum: 0,
+         *   next(value) {
+         *     console.log('Adding: ' + value);
+         *     this.sum = this.sum + value;
+         *   },
+         *   error() { // We actually could just remote this method,
+         *   },        // since we do not really care about errors right now.
+         *   complete() {
+         *     console.log('Sum equals: ' + this.sum);
+         *   }
+         * };
+         *
+         * Rx.Observable.of(1, 2, 3) // Synchronously emits 1, 2, 3 and then completes.
+         * .subscribe(sumObserver);
+         *
+         * // Logs:
+         * // "Adding: 1"
+         * // "Adding: 2"
+         * // "Adding: 3"
+         * // "Sum equals: 6"
+         *
+         *
+         * @example <caption>Subscribe with functions</caption>
+         * let sum = 0;
+         *
+         * Rx.Observable.of(1, 2, 3)
+         * .subscribe(
+         *   function(value) {
+         *     console.log('Adding: ' + value);
+         *     sum = sum + value;
+         *   },
+         *   undefined,
+         *   function() {
+         *     console.log('Sum equals: ' + sum);
+         *   }
+         * );
+         *
+         * // Logs:
+         * // "Adding: 1"
+         * // "Adding: 2"
+         * // "Adding: 3"
+         * // "Sum equals: 6"
+         *
+         *
+         * @example <caption>Cancel a subscription</caption>
+         * const subscription = Rx.Observable.interval(1000).subscribe(
+         *   num => console.log(num),
+         *   undefined,
+         *   () => console.log('completed!') // Will not be called, even
+         * );                                // when cancelling subscription
+         *
+         *
+         * setTimeout(() => {
+         *   subscription.unsubscribe();
+         *   console.log('unsubscribed!');
+         * }, 2500);
+         *
+         * // Logs:
+         * // 0 after 1s
+         * // 1 after 2s
+         * // "unsubscribed!" after 2,5s
+         *
+         *
+         * @param {Observer|Function} observerOrNext (optional) Either an observer with methods to be called,
+         *  or the first of three possible handlers, which is the handler for each value emitted from the subscribed
+         *  Observable.
+         * @param {Function} error (optional) A handler for a terminal event resulting from an error. If no error handler is provided,
+         *  the error will be thrown as unhandled.
+         * @param {Function} complete (optional) A handler for a terminal event resulting from successful completion.
+         * @return {ISubscription} a subscription reference to the registered handlers
+         * @method subscribe
+         */
+        Observable.prototype.subscribe = function (observerOrNext, error, complete) {
+            var operator = this.operator;
+            var sink = toSubscriber_1.toSubscriber(observerOrNext, error, complete);
+            if (operator) {
+                operator.call(sink, this.source);
+            } else {
+                sink.add(this.source ? this._subscribe(sink) : this._trySubscribe(sink));
+            }
+            if (sink.syncErrorThrowable) {
+                sink.syncErrorThrowable = false;
+                if (sink.syncErrorThrown) {
+                    throw sink.syncErrorValue;
+                }
+            }
+            return sink;
+        };
+        Observable.prototype._trySubscribe = function (sink) {
+            try {
+                return this._subscribe(sink);
+            } catch (err) {
+                sink.syncErrorThrown = true;
+                sink.syncErrorValue = err;
+                sink.error(err);
+            }
+        };
+        /**
+         * @method forEach
+         * @param {Function} next a handler for each value emitted by the observable
+         * @param {PromiseConstructor} [PromiseCtor] a constructor function used to instantiate the Promise
+         * @return {Promise} a promise that either resolves on observable completion or
+         *  rejects with the handled error
+         */
+        Observable.prototype.forEach = function (next, PromiseCtor) {
+            var _this = this;
+            if (!PromiseCtor) {
+                if (root_1.root.Rx && root_1.root.Rx.config && root_1.root.Rx.config.Promise) {
+                    PromiseCtor = root_1.root.Rx.config.Promise;
+                } else if (root_1.root.Promise) {
+                    PromiseCtor = root_1.root.Promise;
+                }
+            }
+            if (!PromiseCtor) {
+                throw new Error('no Promise impl found');
+            }
+            return new PromiseCtor(function (resolve, reject) {
+                // Must be declared in a separate statement to avoid a RefernceError when
+                // accessing subscription below in the closure due to Temporal Dead Zone.
+                var subscription;
+                subscription = _this.subscribe(function (value) {
+                    if (subscription) {
+                        // if there is a subscription, then we can surmise
+                        // the next handling is asynchronous. Any errors thrown
+                        // need to be rejected explicitly and unsubscribe must be
+                        // called manually
+                        try {
+                            next(value);
+                        } catch (err) {
+                            reject(err);
+                            subscription.unsubscribe();
+                        }
+                    } else {
+                        // if there is NO subscription, then we're getting a nexted
+                        // value synchronously during subscription. We can just call it.
+                        // If it errors, Observable's `subscribe` will ensure the
+                        // unsubscription logic is called, then synchronously rethrow the error.
+                        // After that, Promise will trap the error and send it
+                        // down the rejection path.
+                        next(value);
+                    }
+                }, reject, resolve);
+            });
+        };
+        Observable.prototype._subscribe = function (subscriber) {
+            return this.source.subscribe(subscriber);
+        };
+        /**
+         * An interop point defined by the es7-observable spec https://github.com/zenparsing/es-observable
+         * @method Symbol.observable
+         * @return {Observable} this instance of the observable
+         */
+        Observable.prototype[observable_1.observable] = function () {
+            return this;
+        };
+        // HACK: Since TypeScript inherits static properties too, we have to
+        // fight against TypeScript here so Subject can have a different static create signature
+        /**
+         * Creates a new cold Observable by calling the Observable constructor
+         * @static true
+         * @owner Observable
+         * @method create
+         * @param {Function} subscribe? the subscriber function to be passed to the Observable constructor
+         * @return {Observable} a new cold observable
+         */
+        Observable.create = function (subscribe) {
+            return new Observable(subscribe);
+        };
+        return Observable;
+    }();
+    exports.Observable = Observable;
+    //# sourceMappingURL=Observable.js.map
+});
+
+/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10625,12 +10625,12 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
         };
     }();
 
-    var allModal = exports.allModal = function () {
-        function allModal() {
-            _classCallCheck(this, allModal);
+    var AllModal = exports.AllModal = function () {
+        function AllModal() {
+            _classCallCheck(this, AllModal);
         }
 
-        _createClass(allModal, [{
+        _createClass(AllModal, [{
             key: 'creatModal',
             value: function creatModal(params, dom) {
                 var title = params.title || '栏目管理';
@@ -10645,7 +10645,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             }
         }]);
 
-        return allModal;
+        return AllModal;
     }();
 });
 
@@ -10655,20 +10655,20 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1), __webpack_require__(10), __webpack_require__(27)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0), __webpack_require__(10), __webpack_require__(27), __webpack_require__(30)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
     } else if (typeof exports !== "undefined") {
-        factory(exports, require('jquery'), require('../component/service.js'), require('../component/tool.js'));
+        factory(exports, require('jquery'), require('../component/service.js'), require('../component/tool.js'), require('../component/textCtrl.js'));
     } else {
         var mod = {
             exports: {}
         };
-        factory(mod.exports, global.jquery, global.service, global.tool);
+        factory(mod.exports, global.jquery, global.service, global.tool, global.textCtrl);
         global.index = mod.exports;
     }
-})(this, function (exports, _jquery, _service, _tool) {
+})(this, function (exports, _jquery, _service, _tool, _textCtrl) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
@@ -10729,6 +10729,15 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
     var a = new index();
     var b = a.initMouse('.hm_nav');
     var c = a.initMouse('.hm_banner');
+    var t = new _textCtrl.EditText(".text-box");
+
+    // export class Text{
+    //     constructor(){}
+    //     hoverState(dom){
+    //         return new EditText(dom);
+    //     }
+    // }
+    // var text = new Text().hoverState(".text-box");
 });
 
 /***/ }),
@@ -10737,7 +10746,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0), __webpack_require__(1), __webpack_require__(19), __webpack_require__(25)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1), __webpack_require__(0), __webpack_require__(19), __webpack_require__(25)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -11706,7 +11715,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
   if (true) {
-    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(0), __webpack_require__(20)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(1), __webpack_require__(20)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -11758,7 +11767,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0), __webpack_require__(22), __webpack_require__(23), __webpack_require__(24)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1), __webpack_require__(22), __webpack_require__(23), __webpack_require__(24)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -11902,7 +11911,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -11987,7 +11996,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -12122,7 +12131,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
   if (true) {
-    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(0), __webpack_require__(26)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(1), __webpack_require__(26)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -12260,7 +12269,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1), __webpack_require__(28), __webpack_require__(29)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0), __webpack_require__(28), __webpack_require__(29)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -12314,10 +12323,10 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
     }();
 
     var TOOL = exports.TOOL = function () {
-        function TOOL(dom) {
+        function TOOL(dom, same) {
             _classCallCheck(this, TOOL);
 
-            this._MouseOverEvent(dom);
+            this._MouseOverEvent(dom, same);
         }
 
         //鼠标移入弹出控制
@@ -12325,7 +12334,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
         _createClass(TOOL, [{
             key: '_MouseOverEvent',
-            value: function _MouseOverEvent(dom) {
+            value: function _MouseOverEvent(dom, same) {
                 var _this = this;
 
                 var ctrl = dom || '';
@@ -12333,7 +12342,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
                 domx.hover(function () {
                     (0, _jquery2.default)('.tools').html('');
                     var wh = domx.offset();
-                    _this.judegeTotal(ctrl, wh);
+                    _this.judegeTotal(ctrl, wh, same);
                 }, function (e) {
                     if (e.toElement == (0, _jquery2.default)('.ctrl_tools')[0] || (0, _jquery2.default)(e.toElement).offsetParent()[0] == (0, _jquery2.default)('.ctrl_tools')[0]) return;else {
                         _this._toolsInit();
@@ -12362,14 +12371,13 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             value: function _toolsInit() {
                 (0, _jquery2.default)('.ctrl_tools').removeAttr("style");
                 (0, _jquery2.default)('.tools').html('');
-                // $('.ctrl_tools').off('mouseleave');
             }
 
             //判断弹出层
 
         }, {
             key: 'judegeTotal',
-            value: function judegeTotal(dom, wh, ht) {
+            value: function judegeTotal(dom, wh, same) {
                 var domx;
                 dom.match('.') ? domx = dom.replace('.', '') : domx = dom.replace('#', '');
                 //console.log(dom);
@@ -12377,12 +12385,12 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
                     case 'hm_nav':
                         var modal = new _navCtrl.NavTotalModal();
                         var ht = (0, _jquery2.default)(dom).innerHeight();
-                        modal.hmtotalMouse(dom, wh, ht);
+                        modal.hmtotalMouse(dom, wh, ht, same);
                         break;
                     case 'hm_banner':
                         var modal = new _bannerCtrl.BannerTotalModal();
                         var ht = (0, _jquery2.default)(dom).offset().top;
-                        modal.hmtotalMouse(dom, wh, ht);
+                        modal.hmtotalMouse(dom, wh, ht, same);
                         break;
                 }
             }
@@ -12398,7 +12406,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1), __webpack_require__(8)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0), __webpack_require__(8)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -12500,8 +12508,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
         if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
     }
 
-    var NavTotalModal = exports.NavTotalModal = function (_allModal) {
-        _inherits(NavTotalModal, _allModal);
+    var NavTotalModal = exports.NavTotalModal = function (_AllModal) {
+        _inherits(NavTotalModal, _AllModal);
 
         function NavTotalModal() {
             _classCallCheck(this, NavTotalModal);
@@ -12513,7 +12521,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             key: 'hmtotalMouse',
 
             //鼠标移动弹出层
-            value: function hmtotalMouse(dom, wh, ht) {
+            value: function hmtotalMouse(dom, wh, ht, same) {
                 var _this2 = this;
 
                 var left = Math.floor(wh.left);
@@ -12525,7 +12533,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
                     var params = {
                         modal: {
                             dom: dom,
-                            name: 'navTotal'
+                            name: 'navTotal',
+                            same: same
                         }
                     };
                     _this2.modalTotal(params);
@@ -12787,7 +12796,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
         }]);
 
         return NavTotalModal;
-    }(_modalCtrl.allModal);
+    }(_modalCtrl.AllModal);
 });
 
 /***/ }),
@@ -12796,7 +12805,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(1), __webpack_require__(8)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0), __webpack_require__(8)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -12898,8 +12907,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
         if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
     }
 
-    var BannerTotalModal = exports.BannerTotalModal = function (_allModal) {
-        _inherits(BannerTotalModal, _allModal);
+    var BannerTotalModal = exports.BannerTotalModal = function (_AllModal) {
+        _inherits(BannerTotalModal, _AllModal);
 
         function BannerTotalModal() {
             _classCallCheck(this, BannerTotalModal);
@@ -13191,7 +13200,449 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
         }]);
 
         return BannerTotalModal;
-    }(_modalCtrl.allModal);
+    }(_modalCtrl.AllModal);
+});
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports, __webpack_require__(0)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else if (typeof exports !== "undefined") {
+        factory(exports, require("jquery"));
+    } else {
+        var mod = {
+            exports: {}
+        };
+        factory(mod.exports, global.jquery);
+        global.textCtrl = mod.exports;
+    }
+})(this, function (exports, _jquery) {
+    "use strict";
+
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
+    exports.EditText = undefined;
+
+    var _jquery2 = _interopRequireDefault(_jquery);
+
+    function _interopRequireDefault(obj) {
+        return obj && obj.__esModule ? obj : {
+            default: obj
+        };
+    }
+
+    function _classCallCheck(instance, Constructor) {
+        if (!(instance instanceof Constructor)) {
+            throw new TypeError("Cannot call a class as a function");
+        }
+    }
+
+    var _createClass = function () {
+        function defineProperties(target, props) {
+            for (var i = 0; i < props.length; i++) {
+                var descriptor = props[i];
+                descriptor.enumerable = descriptor.enumerable || false;
+                descriptor.configurable = true;
+                if ("value" in descriptor) descriptor.writable = true;
+                Object.defineProperty(target, descriptor.key, descriptor);
+            }
+        }
+
+        return function (Constructor, protoProps, staticProps) {
+            if (protoProps) defineProperties(Constructor.prototype, protoProps);
+            if (staticProps) defineProperties(Constructor, staticProps);
+            return Constructor;
+        };
+    }();
+
+    var EditText = exports.EditText = function () {
+        function EditText(dom) {
+            _classCallCheck(this, EditText);
+
+            this.menuTemplate = "<div class=\"edit-menu clearfix\">\n             <div class=\"item edit-message fl\"></div>\n             <div class=\"item edit-href fl\">\n                 <div class=\"href-content\">\n                    <div class=\"clearfix\">\n                        <div class=\"fl no-border\"></div>\n                        <div class=\"fl borders\"></div>\n                    </div>\n                     <div class=\"clearfix href-input\">\n                         <div class=\"fl href-name\">\u94FE\u63A5\u5730\u5740:</div>\n                         <input class=\"fl href-con\" type=\"text\">\n                     </div>\n                     <div class=\"href-confirm\">\n                         <button class=\"href-btn\">\u786E\u5B9A</button>\n                         <button class=\"href-btn cancel-btn\">\u53D6\u6D88</button>\n                     </div>\n                 </div>\n             </div>\n             <div class=\"item edit-delete fl\"></div>\n         </div>";
+            this.editTemplate = "<div class=\"edit-edit clearfix\">\n                 <div class=\"item bg fl\">\n                     <div class=\"bg-item\"></div>\n                     <div class=\"bg-content\">\n                         <div class=\"bg-details clearfix\">\n\n                         </div>\n                         <div class=\"bg-opacity clearfix\">\n                             <div class=\"fl bg-item-hover-active\"></div>\n                             <input type=\"range\" class=\"fr bg-item-range\" value=\"0\" min=\"0\" max=\"100\">\n                         </div>\n                     </div>\n                 </div>\n                 <div class=\"txt fl clearfix\">\n                     <i class=\"fl item bold\">B</i>\n                     <i class=\"fl item italic\">I</i>\n                     <i class=\"fl item underline\">T</i>\n                 </div>\n                 <select class=\"select-style family fl\" name=\"\">\n                 </select>\n                 <select class=\"select-style edit-size fl\" name=\"\">\n                 </select>\n                 <div class=\"item rotate fl\"></div>\n                 <div class=\"item center fl\"></div>\n                 <div class=\"item left fl\"></div>\n                 <div class=\"item link fl\">\n                     <div class=\"href-content\">\n                         <div class=\"clearfix\">\n                             <div class=\"fl no-border\"></div>\n                             <div class=\"fl borders\"></div>\n                         </div>\n                         <div class=\"clearfix href-input\">\n                             <div class=\"fl href-name\">\u94FE\u63A5\u5730\u5740:</div>\n                             <input class=\"fl href-con\" type=\"text\">\n                         </div> \n                         <div class=\"href-confirm\">\n                             <button class=\"href-btn\">\u786E\u5B9A</button>\n                             <button class=\"href-btn cancel-btn\">\u53D6\u6D88</button>\n                         </div>\n                     </div>\n                 </div>\n                 <div class=\"item reset fl\"></div>\n             </div>";
+            this.state = 0;
+            /*为了隐藏编辑栏的状态*/
+            this.editState = 0;
+            /*存储初始化过的颜色*/
+            this.textColor = {
+                color: "",
+                opacity: ""
+            };
+            /*先初始化必须的模块*/
+            this.initEnter(dom);
+            this.mouseEnter(dom);
+            this.mouseOut(dom);
+        }
+        /*初始化进来的所需要的模块必须*/
+
+
+        _createClass(EditText, [{
+            key: "initEnter",
+            value: function initEnter(dom) {
+                var $select = (0, _jquery2.default)(dom);
+                var $editMenu = (0, _jquery2.default)(dom + " .edit-menu-container") || "";
+                var $editEdit = (0, _jquery2.default)(dom + " .edit-edit-container") || "";
+                if ($select) {
+                    if ($editMenu) {
+                        $editMenu.remove();
+                    }
+                    if ($editEdit) {
+                        $editEdit.remove();
+                    }
+                    $select.prepend("<div class=\"edit-edit-container\"></div>\n         <div class=\"edit-menu-container\"></div>");
+                }
+            }
+            /*鼠标进入*/
+
+        }, {
+            key: "mouseEnter",
+            value: function mouseEnter(dom) {
+                var _this = this;
+
+                var $select = (0, _jquery2.default)(dom) || "";
+                var $editMenu = (0, _jquery2.default)(dom + " .edit-menu-container") || "";
+                if ($select) {
+                    $select.mouseenter(function (e) {
+                        $editMenu.html("");
+                        (0, _jquery2.default)(dom + " .edit-text").addClass("active");
+                        if (_this.state == 0) {
+                            _this.initEnter(dom);
+                            $editMenu = (0, _jquery2.default)(dom + " .edit-menu-container");
+                            $editMenu.append(_this.menuTemplate);
+                        }
+                        /*点击事件的发生*/
+                        _this.clickMenu(dom);
+                    });
+                }
+            }
+            /*鼠标出了某个范围*/
+
+        }, {
+            key: "mouseOut",
+            value: function mouseOut(dom, template, domChild) {
+                var _this2 = this;
+
+                //template为可选参数
+                var $select = (0, _jquery2.default)(dom) || "";
+                if ($select) {
+                    if (!domChild) {
+                        $select.mouseleave(function (e) {
+                            var $editMenu = (0, _jquery2.default)(dom + " .edit-menu-container") || "";
+                            var $editEdit = (0, _jquery2.default)(dom + " .edit-edit-container") || "";
+                            if (_this2.editState == 0) {
+                                _this2.state = 0;
+                                /*$editMenu.html("");*/
+                                $editMenu.remove();
+                                $editEdit.remove();
+                                (0, _jquery2.default)(dom + " .edit-text").removeClass("active");
+                            }
+                            e.stopPropagation();
+                        });
+                    }
+                }
+            }
+            /*如果编辑栏出来，隐藏方式是点击编辑区域以外的*/
+
+        }, {
+            key: "hideEdit",
+            value: function hideEdit(dom) {
+                var _this3 = this;
+
+                var $select = (0, _jquery2.default)(dom + " .edit-edit-container");
+                if ($select) {
+                    (0, _jquery2.default)(document).click(function (e) {
+                        var $editMenu = (0, _jquery2.default)(dom + " .edit-menu-container") || "";
+                        $select = (0, _jquery2.default)(dom + " .edit-edit-container");
+                        if (_this3.editState == 1) {
+                            $select.html("");
+                            (0, _jquery2.default)(dom + " .edit-text").removeClass("active");
+                            $editMenu.remove();
+                            $select.remove();
+                            _this3.editState = 0;
+                            _this3.state = 0;
+                        }
+                        e.stopPropagation();
+                    });
+                    (0, _jquery2.default)(dom).click(function (e) {
+                        e.stopPropagation();
+                    });
+                }
+            }
+            /*点击第一层的事件*/ //这里注意回调函数中的this，注意回调的写法
+
+        }, {
+            key: "clickMenu",
+            value: function clickMenu(dom) {
+                var _this4 = this;
+
+                if ((0, _jquery2.default)(dom + " .edit-menu")[0]) {
+                    /*是否显示链接*/
+                    var hrefState = true;
+                    (0, _jquery2.default)(dom + " .edit-menu").click(function (e) {
+                        var regMes = /edit-message/g;
+                        var regHerf = /edit-href/g;
+                        var regDelet = /edit-delete/g;
+                        /*编辑信息*/
+                        if (regMes.test(e.target.className)) {
+                            _this4.state = 1;
+                            _this4.editState = 1;
+                            (0, _jquery2.default)(dom + " .edit-edit-container").html("");
+                            (0, _jquery2.default)(dom + " .edit-menu-container").html("");
+                            (0, _jquery2.default)(dom + " .edit-edit-container").append(_this4.editTemplate);
+                            _this4.hideEdit(dom);
+                            _this4.editClick(dom);
+                            /*当下拉框发生改变*/
+                            _this4.selectChange(dom, ".edit-size");
+                            _this4.selectChange(dom, ".family");
+                        }
+                        /*编辑链接*/
+                        if (regHerf.test(e.target.className)) {
+                            hrefState = !hrefState;
+                            if (hrefState) {
+                                (0, _jquery2.default)(dom + " .href-content").css("display", "none");
+                            } else {
+                                (0, _jquery2.default)(dom + " .href-content").css("display", "block");
+                                _this4.linkClick(dom);
+                            }
+                        }
+                        /*删除*/
+                        if (regDelet.test(e.target.className)) {
+                            (0, _jquery2.default)(dom + " .edit-menu-container").html("");
+                            (0, _jquery2.default)(dom + " .edit-text").removeClass("active");
+                        }
+                        e.stopPropagation();
+                    });
+                }
+                return false;
+            }
+            /*链接部分的功能*/
+
+        }, {
+            key: "linkClick",
+            value: function linkClick(dom) {
+                var $targetEle = (0, _jquery2.default)(dom + " .href-confirm");
+                if ($targetEle) {
+                    $targetEle.click(function (e) {
+                        var hrefReg = /^(http|https)?:\/\/www./;
+                        if (e.target.innerHTML == "确定") {
+                            if ((0, _jquery2.default)(dom + " .href-con").val()) {
+                                var href = hrefReg.test((0, _jquery2.default)(dom + " .href-con").val()) ? (0, _jquery2.default)(dom + " .href-con").val() : "https://www." + (0, _jquery2.default)(dom + " .href-con").val();
+                                (0, _jquery2.default)(dom + " .edit-text a").attr("href", href);
+                            } else {
+                                console.log("请先输入地址");
+                            }
+                            (0, _jquery2.default)(dom + " .href-content").css("display", "none");
+                        }
+                        if (e.target.innerHTML == "取消") {
+                            (0, _jquery2.default)(dom + " .href-content").css("display", "none");
+                        }
+                        e.stopPropagation();
+                    });
+                }
+            }
+            /*编辑部分的功能*/
+
+        }, {
+            key: "editClick",
+            value: function editClick(dom) {
+                var _this5 = this;
+
+                /*样式重置*/
+                var restStyle = {
+                    "background-color": "#fff",
+                    "font-weight": "normal",
+                    "font-style": "normal",
+                    "text-decoration": "none",
+                    "font-family": "microsoft yahei",
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "color": "#000",
+                    "transform": "rotate(0)",
+                    "opacity": "1"
+                };
+                /*存储文字的大小*/
+                var textSize = [10, 12, 14, 16, 18, 20, 30, 40];
+                var eleSize = (0, _jquery2.default)(dom + " .edit-size");
+                for (var es = 0; es < textSize.length; es++) {
+                    eleSize.append("<option value=\"" + textSize[es] + "\">" + textSize[es] + "px</option>");
+                }
+                var textFamily = [{ name: "宋体", value: "SimSun" }, { name: "黑体", value: "SimHei" }, { name: "微软雅黑", value: "Microsoft YaHei" }, { name: "微软正黑体", value: "Microsoft JhengHei" }, { name: "新宋体", value: "NSimSun" }, { name: "隶书", value: "LiSu" }, { name: "幼圆", value: "YouYuan" }, { name: "华文细黑", value: "STXihei" }, { name: "华文楷体", value: "STKaiti" }, { name: "华文宋体", value: "STSong" }, { name: "华文中宋", value: "STZhongsong" }, { name: "华文仿宋", value: "STFangsong" }, { name: "方正舒体", value: "FZShuTi" }, { name: "方正姚体", value: "FZYaoti" }, { name: "华文彩云", value: "STCaiyun" }, { name: "华文琥珀", value: "STHupo" }, { name: "华文隶书", value: "STLiti" }, { name: "华文行楷", value: "STXingkai" }, { name: "华文新魏", value: "STXinwei" }];
+                var eleFamily = (0, _jquery2.default)(dom + " .family");
+                for (var fi = 0; fi < textFamily.length; fi++) {
+                    eleFamily.append("<option value=\"" + textFamily[fi].value + "\">" + textFamily[fi].name + "</option>");
+                }
+                /*bg颜色*/
+                var bgStyle = ["b000", "bFCC02E", "bF67C01", "bE64A19", "b8E24AA", "b1F87E8", "b05A045"];
+                for (var bi = 0; bi < bgStyle.length; bi++) {
+                    (0, _jquery2.default)(dom + " .bg-details").append("<div class=\"bg-details-item " + bgStyle[bi] + " fl\">\n            <div class=\"bg-details-item-absolute " + bgStyle[bi] + "\"></div>\n        </div>");
+                }
+                /*初始化面板的样式*/
+                (0, _jquery2.default)(dom + " .bg-item-hover-active").css("background-color", this.textColor.color || "#" + bgStyle[0].slice(1));
+                (0, _jquery2.default)(dom + " .edit-text a").css("color", this.textColor.color || "#" + bgStyle[0].slice(1));
+                (0, _jquery2.default)(dom + " .edit-text a").css("opacity", this.textColor.opacity || "1");
+                (0, _jquery2.default)(dom + " .bg-item-range").css("background", "linear-gradient(to right, " + (this.textColor.color || (0, _jquery2.default)(dom + " .bg-item-hover-active").css("background-color")) + ", rgba(0, 0, 0, 0))");
+
+                /*正式逻辑*/
+                var $select = (0, _jquery2.default)(dom + " .edit-edit");
+                /*初始化link的状态*/
+                var hrefState = true;
+                if ($select) {
+                    $select.click(function (e) {
+                        var bgReg = /bg-item/g,
+                            boldReg = /bold/g,
+                            italicReg = /italic/g,
+                            underReg = /underline/g,
+                            rotateReg = /rotate/g,
+                            centerReg = /center/g,
+                            leftReg = /left/g,
+                            linkReg = /link/g,
+                            resetReg = /reset/g;
+                        var targetClass = e.target.className;
+                        var textTarget = (0, _jquery2.default)(dom + " .edit-text a");
+                        if (bgReg.test(targetClass)) {
+                            (0, _jquery2.default)(dom + " .bg-content").css("display", "block");
+
+                            _this5.bgHover(dom);
+                            _this5.bgClick(dom);
+                            _this5.bgRangeChange(dom);
+                        } else if (!bgReg.test(targetClass) && targetClass != "bg-content") {
+                            (0, _jquery2.default)(dom + " .bg-content").css("display", "none");
+                        }
+                        if (boldReg.test(targetClass)) {
+                            textTarget.css("font-weight", "bold");
+                        }
+                        if (italicReg.test(targetClass)) {
+                            textTarget.css("font-style", "italic");
+                        }
+                        if (underReg.test(targetClass)) {
+                            textTarget.css("text-decoration", "underline");
+                        }
+                        if (rotateReg.test(targetClass)) {
+                            textTarget.css("transform", "rotate(90deg)");
+                        }
+                        if (centerReg.test(targetClass)) {
+                            textTarget.css("text-align", "center");
+                        }
+                        if (leftReg.test(targetClass)) {
+                            textTarget.css("text-align", "left");
+                        }
+                        if (linkReg.test(targetClass)) {
+                            hrefState = !hrefState;
+                            if (hrefState) {
+                                (0, _jquery2.default)(dom + " .href-content").css("display", "none");
+                            } else {
+                                (0, _jquery2.default)(dom + " .href-content").css("display", "block");
+                                _this5.linkClick(dom);
+                            }
+                        } else {
+                            (0, _jquery2.default)(dom + " .href-content").css("display", "none");
+                        }
+                        if (resetReg.test(targetClass)) {
+                            textTarget.css(restStyle);
+                        }
+                        e.stopPropagation();
+                    });
+                }
+            }
+            /*编辑栏的下拉框改变发生的事件*/
+
+        }, {
+            key: "selectChange",
+            value: function selectChange(dom, domChild) {
+                var $select = (0, _jquery2.default)(dom + " " + domChild);
+                if ($select) {
+                    if (domChild == ".edit-size") {
+                        $select.change(function (e) {
+                            var textTarget = (0, _jquery2.default)(dom + " .edit-text a");
+                            textTarget.css("font-size", (0, _jquery2.default)(e.target).val() + "px");
+                            return false;
+                        });
+                    }
+                    if (domChild == ".family") {
+                        $select.change(function (e) {
+                            var textTarget = (0, _jquery2.default)(dom + " .edit-text a");
+                            textTarget.css("font-family", "" + (0, _jquery2.default)(e.target).val());
+                            return false;
+                        });
+                    }
+                }
+            }
+            /*编辑框颜色发生变化包括点击和进入事件*/
+            /*进入事件*/
+
+        }, {
+            key: "bgHover",
+            value: function bgHover(dom) {
+                var _this6 = this;
+
+                var $select = (0, _jquery2.default)(dom + " .bg-details-item");
+                var $itemActiveSelect = (0, _jquery2.default)(dom + " .bg-item-hover-active");
+                /*bg-item-hover-active*/
+                if ($itemActiveSelect) {
+                    $select.mouseenter(function (e) {
+                        var itemReg = /bg-details-item-absolute/g;
+                        if (itemReg.test(e.target.className)) {
+                            $itemActiveSelect.css("background-color", "#" + e.target.className.split(" ")[1].slice(1));
+                            (0, _jquery2.default)(dom + " .edit-text a").css("color", "#" + e.target.className.split(" ")[1].slice(1));
+                            (0, _jquery2.default)(dom + " .bg-item-range").css("background", "linear-gradient(to right, " + $itemActiveSelect.css("background-color") + ", rgba(0, 0, 0, 0))");
+                            _this6.textColor.color = "#" + e.target.className.split(" ")[1].slice(1);
+                        }
+                        return false;
+                    });
+                }
+            }
+            /*点击事件*/
+
+        }, {
+            key: "bgClick",
+            value: function bgClick(dom) {
+                var _this7 = this;
+
+                var $select = (0, _jquery2.default)(dom + " .bg-details-item");
+                var $itemActiveSelect = (0, _jquery2.default)(dom + " .bg-item-hover-active");
+                if ($itemActiveSelect) {
+                    $select.click(function (e) {
+                        var itemReg = /bg-details-item-absolute/g;
+                        if (itemReg.test(e.target.className)) {
+                            $itemActiveSelect.css("background-color", "#" + e.target.className.split(" ")[1].slice(1));
+                            (0, _jquery2.default)(dom + " .edit-text a").css("color", "#" + e.target.className.split(" ")[1].slice(1));
+                            (0, _jquery2.default)(dom + " .bg-item-range").css("background", "linear-gradient(to right, " + $itemActiveSelect.css("background-color") + ", rgba(0, 0, 0, 0))");
+                            _this7.textColor.color = $itemActiveSelect.css("background-color");
+                        }
+                        return false;
+                    });
+                }
+            }
+            /*其中的滑块发生了改变而改变的颜色*/
+
+        }, {
+            key: "bgRangeChange",
+            value: function bgRangeChange(dom) {
+                var _this8 = this;
+
+                var $select = (0, _jquery2.default)(dom + " .bg-item-range");
+                var $itemActiveSelect = (0, _jquery2.default)(dom + " .bg-item-hover-active");
+                if ($select) {
+                    $select.change(function (e) {
+                        $itemActiveSelect.css("opacity", "" + (100 - $select.val()) / 100);
+                        (0, _jquery2.default)(dom + " .edit-text a").css("opacity", "" + (100 - $select.val()) / 100);
+                        _this8.textColor.opacity = "" + (100 - $select.val()) / 100;
+                        return false;
+                    });
+                }
+            }
+        }]);
+
+        return EditText;
+    }();
 });
 
 /***/ })

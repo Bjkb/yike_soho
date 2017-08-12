@@ -12,68 +12,90 @@
     <div class="page">
         <!--首页-->
         <div class="hm_nvbox">
-            <div class="hm_nav">
-                <ul class="hm_naxxx">
-                    <li><a href="1234" nav-cid="0" ishp="true">首页</a></li>
-                    <li><a href="5678" nav-cid="1">测试二</a></li>
-                    <li><a href="67911" nav-cid="2">测试三</a></li>
-                    <li><a style="display:none;" href="2234" nav-cid="3">测试四</a></li>
+            <div class="webNav_sh" id="webNav_sh2">
+                <ul>
+                    <li><a href="1234" isHD="true"><span>首页</span></a></li>
+                    <li><a href="5678"><span>测试二</span></a></li>
+                    <li><a href="67911"><span>测试三</span></a></li>
+                    <li><a style="display:none;" href="2234"><span>测试四</span></a></li>
                 </ul>
             </div>
         </div>
         <!--banner-->
         <div class="hm_nvbox">
-            <div class="hm_banner">
+            <div class="webBanner_sh" id="webBanner_sh1">
                 <ul>
-                    <li><a href="121212"><img src="assets/image/1.jpg" alt="背景图"></a></li>
-                    <li><a href="121213"><img src="assets/image/2.jpg" alt=""></a></li>
-                    <li><a href="121214"><img src="assets/image/3.jpg" alt=""></a></li>
+                    <li class="swiper-slide">
+                        <a href="121212">
+                            <img src="assets/image/1.jpg" alt="背景图">
+                            <div class="edit_inPanel">
+                                <div class="webText_sh" id="webText_sh1">
+                                    <a href="javascript:;">123</a>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="swiper-slide">
+                        <a href="javascript:;">
+                            <img src="assets/image/2.jpg" alt="">
+                            <div class="edit_inPanel"></div>
+                        </a>
+                    </li>
+                    <li class="swiper-slide"><a href="121214"><img src="assets/image/3.jpg" alt=""></a></li>
                 </ul>
             </div>
         </div>
-    </div>
-    <div class="clearfix"></div>
-    <!--工具栏存放位置-->
-    <div class="ctrl_tools">
-        <div class="tools">         
+        <!--文字-->
+        <div class="hm_nvbox">
+            <div class="text-box">
+                <div class="edit-text">
+                    <a>可编辑的文字水电费水电费水电费士大夫士大夫士大夫士大夫</a>
+                    <!--<img src="../assets/image/text/message.png" class="edit-return">-->
+                </div>
+            </div>
         </div>
     </div>
-    <!-- <div class="ctrl_tools">
-        <div class="tools">
-            <div class="modal_box">
-                <div class="modal_box_ct">
-                    <div class="mbc_hd">
-                        <h2>编辑横幅</h2><span class="hb_subh">(建议上传宽高为xxx的图片)</span><span class="m_frs m_cls">×</span></div>
-                    <div class="modal_box_inc_val">
-                        <div class="md_hbanner_box">
-                            <ul class="md_sl_menu">
-                                <li>
-                                    <a class="sl_m_a sl_m_active" href="javascript:;">常规</a>
-                                </li>
-                            </ul>
-                            <div class="rule_setting">
-                              <div class="list-item list-bg-gy">
-                                <div class="col-25">图片</div><div class="col-25">链接</div><div class="col-25">排序</div><div class="col-25">操作</div>   
-                              </div>
-                              <div class="list-item list-dv-ct">
-                                 <div class="col-25"><img src="assets/image/1.jpg" alt="背景图"></div><div class="col-25"><span>无</span></div><div class="col-25"><a href="javascript:;" class="md_arrow md_up"></a><a href="javascript:;" class="md_arrow md_down"></a></div>
-                                 <div class="col-25"><div class="hb_edit_icon"></div><div class="hb_delete_icon"></div></div>
-                              </div> 
-                              <div class="hbanner_add">
-                                 <span>+添加横幅</span>
-                              </div>  
+    <!-- <div class="sidebar">
+        <div class="entry_draggle">
+            <div title="模块" class="panelBtn panelBtn_module"></div>
+            <div title="网站设置" class="panelBtn panelBtn_setup"></div>
+        </div>
+        <div class="entry_modal">
+            <div class="entry_mbox">
+                <div class="etitle_bar">
+                    <div class="eicon_setup"></div>
+                    <div class="eb_nav">
+                        <div class="eb_setTab">基础设置</div>
+                        <div class="triangleActive" style="left: 34.5px;"></div>
+                    </div>
+                    <div class="closeFunPanel"></div>
+                </div>
+                <div class="eb_content">
+                    <div class="innerNavTool">
+                        <div class="ict_nav_set all_set ict_nav_active">全站设置</div>
+                        <div class="ict_nav_set page_set">页面设置</div>
+                        <div class="ict_nav_set bg_set">设置背景</div>
+                    </div>
+                    <div class="eb_slide_scroll">
+                        <div class="eb_slide_select">
+                            <div class="eb_aset_cont">
+                                <span>网站设置:</span>
+                            </div>
+                            <div class="eb_check_line">
+                                
                             </div>
                         </div>
-                    </div>
-                    <div class="mbc_hd">
-                        <div class="mbc_ok">确认</div>
-                        <div class="mbc_cancel m_cls">取消</div>
                     </div>
                 </div>
             </div>
         </div>
     </div> -->
-    <!--  -->
+    <div class="clearfix"></div>
+    <!--工具栏存放位置-->
+    <div class="ctrl_tools">
+        <div class="tools">
+        </div>
+    </div>
 </body>
 <script src="build/common.js"></script>
 <script src="build/main.js"></script>
